@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Cotações</title>
+
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="INSIDE_SITES.html">Sites</a>
+            <a href="DISPLAY.html">Commodities</a>
+            <a href="HOME.html">Início</a>
+        </nav>
+    </header>
+    <h1 class="titulo">Cotações Agrícolas</h1>
+
+    <script>
+        async function downloadCSV() {
+            try {
+                // Fetch data from the API
+                const response = await fetch('http://127.0.0.1:5000/cotacao/todas');
+                const data = await response.json();
+
+                // Prepare CSV content
+                let csvContent = 'Data;Soja;Milho;Fonte\n';
+
+                // Process each source
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    if ('ERRO' in item) {
+                        console.warn(`Erro ao processar ${key}: ${item.ERRO}`);
+                        return;
+                    }
+
+                    
+                    if ('Regiao Norte' in item && 'Regiao Noroeste' in item) {
+                        csvContent += `${item.Data || 'N/A'};${item['Regiao Norte'].Soja || 'N/A'};${item['Regiao Norte'].Milho || 'N/A'};${item.Fonte || key}\n`;
+                        csvContent += `${item.Data || 'N/A'};${item['Regiao Noroeste'].Soja || 'N/A'};${item['Regiao Noroeste'].Milho || 'N/A'};${item.Fonte || key}\n`;
+                    }
+                    
+                    else if ('Manhã' in item && 'Tarde' in item) {
+                        csvContent += `${item.Data || 'N/A'};${item['Manhã'].Soja || 'N/A'};${item['Manhã'].Milho || 'N/A'};${item.Fonte || key} (Manhã)\n`;
+                        csvContent += `${item.Data || 'N/A'};${item['Tarde'].Soja || 'N/A'};${item['Tarde'].Milho || 'N/A'};${item.Fonte || key} (Tarde)\n`;
+                    }
+
+                    else if ('Balcão' in item && 'Disponível' in item) {
+                        csvContent += `${item.Data || 'N/A'};${item['Balcão'].Soja || 'N/A'};${item['Balcão'].Milho || 'N/A'};${item.Fonte || key} (Balcão)\n`;
+                        csvContent += `${item.Data || 'N/A'};${item['Disponível'].Soja || 'N/A'};${item['Disponível'].Milho || 'N/A'};${item.Fonte || key} (Disponível)\n`;
+                    }
+                    
+                    else {
+                        csvContent += `${item.Data || 'N/A'};${item.Soja || 'N/A'};${item.Milho || 'N/A'};${item.Fonte || key}\n`;
+                    }
+                });
+
+                // Create a downloadable CSV file
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'FECHAMENTO.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Erro ao baixar CSV:', error);
+                alert('Não foi possível baixar o arquivo CSV. Verifique se a API está funcionando.');
+            }
+        }
+    </script>
+    <button class="download-btn" onclick="downloadCSV()"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></svg>Baixar preços em CSV</button>
+
+    <h1 class="subtitulo">Rio Grande do Sul</h1>
+
+    <h2 class="gradiente-cidade">Passo Fundo</h2>
+    <div id="cotacoes_passo_fundo"></div>
+
+    <h2 class="gradiente-cidade">Não-me-Toque</h2>
+    <div id="cotacoes_nao_me_toque"></div>
+
+    <h2 class="gradiente-cidade">Santa Rosa</h2>
+    <div id="cotacoes_santa_rosa"></div>
+
+    <h2 class="gradiente-cidade">Ijuí</h2>
+    <div id="cotacoes_ijui"></div>
+
+    <h1 class="subtitulo">Paraná</h1>
+
+    <h2 class="gradiente-cidade">Cascavel</h2>
+    <div id="cotacoes_cascavel"></div>
+
+    <h2 class="gradiente-cidade">Maringá</h2>
+    <div id="cotacoes_maringa"></div>
+
+
+    <script>
+        function carregarCidades(idContainer, url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById(idContainer);
+                    for (const empresa in data) {
+                        const info = data[empresa];
+                        const div = document.createElement("div");
+                        div.className = "empresa";
+
+                        if (info.url) {
+                            div.dataset.url = info.url;
+                            div.style.cursor = "pointer";
+                            div.addEventListener("click", function () {
+                                window.open(this.dataset.url, "_blank");
+                            });
+                        }
+
+                        let conteudo = `<h2>${empresa.toUpperCase()}</h2>`;
+                        conteudo += `<p>Data: ${info.Data || '---'}</p>`;
+                        conteudo += `<p>${info.cidade || 'Cidade desconhecida'} - ${info.estado || 'Estado desconhecido'}</p>`;
+
+                        // Avisos especiais
+                        if (empresa.toLowerCase() === "cotrijal") {
+                            conteudo += `<p><strong>Atenção:</strong> O faturamento de grãos pela parte da tarde será das 13:30 às 16:00h.</p>`;
+                        }
+                        if (empresa.toLowerCase() === "cotrirosa") {
+                            conteudo += `<p><strong>Atenção:</strong> O site oficial apresenta o valor real das commodities, por aqui é um valor aproximado.</p>`;
+                        }
+                        if (empresa.toLowerCase() === "cotrisal") {
+                            conteudo += `<p><strong>Atenção:</strong> O faturamento de grãos pela parte da tarde será das 13:30 às 16:00h.</p>`;
+                        }
+
+                        // Cotações
+                        if (info["Balcão"]) {
+                            conteudo += `<h4>Balcão</h4><div class="valores">
+                                ${info["Balcão"].Milho ? `<span>Milho: ${info["Balcão"].Milho}</span>` : ''}
+                                ${info["Balcão"].Soja ? `<span>Soja: ${info["Balcão"].Soja}</span>` : ''}
+                            </div>`;
+                        }
+
+                        if (info["Disponível"]) {
+                            conteudo += `<h4>Disponível</h4><div class="valores">
+                                ${info["Disponível"].Milho ? `<span>Milho: ${info["Disponível"].Milho}</span>` : ''}
+                                ${info["Disponível"].Soja ? `<span>Soja: ${info["Disponível"].Soja}</span>` : ''}
+                            </div>`;
+                        }
+
+                        if (info["Manhã"]) {
+                            conteudo += `<h4>Manhã</h4><div class="valores">
+                                ${info["Manhã"].Milho ? `<span>Milho: ${info["Manhã"].Milho}</span>` : ''}
+                                ${info["Manhã"].Soja ? `<span>Soja: ${info["Manhã"].Soja}</span>` : ''}
+                            </div>`;
+                        }
+
+                        if (info["Tarde"]) {
+                            conteudo += `<h4>Tarde</h4><div class="valores">
+                                ${info["Tarde"].Milho ? `<span>Milho: ${info["Tarde"].Milho}</span>` : ''}
+                                ${info["Tarde"].Soja ? `<span>Soja: ${info["Tarde"].Soja}</span>` : ''}
+                            </div>`;
+                        }
+
+                        if (info["Regiao Norte"]) {
+                            conteudo += `<h4>Região Norte</h4><div class="valores">
+                                ${info["Regiao Norte"].Milho ? `<span>Milho: ${info["Regiao Norte"].Milho}</span>` : ''}
+                                ${info["Regiao Norte"].Soja ? `<span>Soja: ${info["Regiao Norte"].Soja}</span>` : ''}
+                            </div>`;
+                        }
+
+                        if (info["Regiao Noroeste"]) {
+                            conteudo += `<h4>Região Noroeste</h4><div class="valores">
+                                ${info["Regiao Noroeste"].Milho ? `<span>Milho: ${info["Regiao Noroeste"].Milho}</span>` : ''}
+                                ${info["Regiao Noroeste"].Soja ? `<span>Soja: ${info["Regiao Noroeste"].Soja}</span>` : ''}
+                            </div>`;
+                        }
+
+                        if (info.Soja || info.Milho) {
+                            conteudo += `<div class="valores">
+                                ${info.Soja ? `<span>Soja: ${info.Soja}</span>` : ''}
+                                ${info.Milho ? `<span>Milho: ${info.Milho}</span>` : ''}
+                            </div>`;
+                        }
+
+                        div.innerHTML = conteudo;
+                        container.appendChild(div);
+                    }
+                })
+                .catch(error => {
+                    document.getElementById(idContainer).innerHTML = "Erro ao carregar dados.";
+                    console.error("Erro:", error);
+                });
+        }
+
+        // Chamadas por cidade
+        carregarCidades("cotacoes_passo_fundo", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/passo_fundo");
+        carregarCidades("cotacoes_nao_me_toque", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/nao_me_toque");
+        carregarCidades("cotacoes_santa_rosa", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/santa_rosa");
+        carregarCidades("cotacoes_ijui", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/ijui");
+        carregarCidades("cotacoes_cascavel", "http://127.0.0.1:5000/cotacao/parana/cascavel");
+        carregarCidades("cotacoes_maringa", "http://127.0.0.1:5000/cotacao/parana/maringa");
+    </script>
+</body>
+
+</html>
