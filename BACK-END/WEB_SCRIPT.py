@@ -64,11 +64,11 @@ def cotacao_agricolagemelli(): # DOIS SOUP
         return {
             "Data": data_ptBR,
             "Soja": soja,
-           "Milho": milho,
-           "url": url,
-           "Fonte": "Agricolagemelli",
-           "estado": "Paraná",
-          "cidade": "Cascavel"
+            "Milho": milho,
+            "url": url,
+            "Fonte": "Agricolagemelli",
+            "Estado": "Paraná",
+            "Cidade": "Cascavel"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Agricolagemelli: {str(e)}", "url": url}
@@ -98,8 +98,8 @@ def cotacao_camposverdes():
             "Milho": milho,
             "url": url,
             "Fonte": "Campos Verdes",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Maringá"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Maringá"
 
         }
     except Exception as e:
@@ -130,8 +130,8 @@ def cotacao_capaznet():
             "Milho": milho,
             "url": url,
             "Fonte": "Capaznet",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Não-me-Toque"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Não-me-Toque"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Capaznet: {str(e)}", "url": url}
@@ -160,8 +160,8 @@ def cotacao_cepalcereais():
             "Milho": milho,
             "url": url,
             "Fonte": "Cepalcereais",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Passo Fundo"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Passo Fundo"
         }
     except Exception as e:
         return {"ERRO": f"Não foi possível acessar os dados da Cepalcereais. {str(e)}", "url": url}
@@ -190,8 +190,8 @@ def cotacao_coagril():
             "Milho": milho,
             "url": url,
             "Fonte": "Coagril",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Passo Fundo"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Passo Fundo"
         }
     except Exception as e:
         return {"ERRO": f"Não foi possível acessar os dados da Coagril. {str(e)}", "url": url}
@@ -208,10 +208,10 @@ def cotacao_coopeagri():
         soup = BeautifulSoup(response.text, 'html.parser')
         data_hoje = date.today()
         data_hoje_ptBR = data_hoje.strftime("%d/%m/%Y")
-        price = soup.find_all('span', style='font-size:18px;')
-        if len(price) >= 3:
-            milho = price[1].get_text(strip=True) if price[1] else "N/A"
-            soja = price[0].get_text(strip=True).replace("c/ DAP", "").strip() if price[0] else "N/A"
+        price = soup.find_all('span', style='letter-spacing:normal;')
+        if len(price) >= 5:
+            milho = price[3].get_text(strip=True) if price[3] else "N/A"
+            soja = price[1].get_text(strip=True).replace("c/ DAP", "").strip() if price[1] else "N/A"
         else:
             soja = milho = "---"
         return {
@@ -220,8 +220,8 @@ def cotacao_coopeagri():
             "Milho": milho,
             "url": url,
             "Fonte": "Coopeagri",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Não-me-Toque"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Não-me-Toque"
         }
     except Exception as e:
         return {"ERRO": f"Não foi possível acessar os dados da Coopeagri. {str(e)}", "url": url}
@@ -259,8 +259,8 @@ def cotacao_cotacoesmercado():
             },
             "url": url,
             "Fonte": "Cotacoesemercado",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Passo Fundo"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Passo Fundo"
         }
     except Exception as e:
         return {"ERRO": f"Não foi possível acessar os dados da Cotações & Mercado: {str(e)}", "url": url}
@@ -290,8 +290,8 @@ def cotacao_cotriba():
             "Milho": milho,
             "url": url,
             "Fonte": "Cotriba",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Não-me-Toque"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Não-me-Toque"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Cotriba: {str(e)}", "url": url}
@@ -321,8 +321,8 @@ def cotacao_cotrijal():
             "Milho": milho,
             "url": url,
             "Fonte": "Cotrijal",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Não-me-Toque"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Não-me-Toque"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Cotrijal: {str(e)}", "url": url}
@@ -352,8 +352,8 @@ def cotacao_cotrirosa(): # ESSE TEM PREÇO PROXIMO, NÃO REAL
             "Soja": soja,
             "url": url,
             "Fonte": "Cotrirosa",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Santa Rosa"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Santa Rosa"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Cotrirosa: {str(e)}", "url": url}
@@ -385,8 +385,8 @@ def cotacao_cotriel():
             "Milho": milho,
             "url": url,
             "Fonte": "Cotriel",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Não-me-Toque"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Não-me-Toque"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Cotriba: {str(e)}", "url": url}
@@ -425,8 +425,8 @@ def cotacao_cotrisal():
             },
             "url": url,
             "Fonte": "Cotrisal",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Passo Fundo"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Passo Fundo"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Cotrisal: {str(e)}", "url": url}
@@ -456,8 +456,8 @@ def cotacao_cotrisoja():
             "Soja": soja,
             "url": url,
             "Fonte": "Cotrisoja",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Passo Fundo"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Passo Fundo"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Cotrisoja: {str(e)}", "url": url}
@@ -487,8 +487,8 @@ def cotacao_grupopoletto():
             "Soja": soja,
             "url": url,
             "Fonte": "Grupopoletto",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Passo Fundo"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Passo Fundo"
         }
     except Exception as e:
         return {"ERRO": f"Não foi possível acessar os dados da Grupo Poletto: {str(e)}", "url": url}
@@ -518,8 +518,8 @@ def cotacao_plantarnet():
             "Soja": soja,
             "url": url,
             "Fonte": "Plantarnet",
-            "estado": "Paraná",
-            "cidade": "Cascavel"
+            "Estado": "Paraná",
+            "Cidade": "Cascavel"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da PlantarNet: {str(e)}", "url": url}
@@ -549,8 +549,8 @@ def cotacao_sebben():
             "Soja": soja,
             "url": url,
             "Fonte": "Sebben",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Passo Fundo"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Passo Fundo"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Sebben: {str(e)}", "url": url}
@@ -581,8 +581,8 @@ def cotacao_cooperoque():
             "Soja": soja,
             "url": url,
             "Fonte": "Cooperoque",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Ijuí"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Ijuí"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Cooperoque: {str(e)}", "url": url}
@@ -612,8 +612,8 @@ def cotacao_lazarotto():
             "Soja": soja,
             "url": url,
             "Fonte": "Lazarotto",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Ijuí"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Ijuí"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Lazarotto: {str(e)}", "url": url}
@@ -643,8 +643,8 @@ def cotacao_grupouggeri():
             "Soja": soja,
             "url": url,
             "Fonte": "Grupouggeri",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Ijuí"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Ijuí"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Grupouggeri: {str(e)}", "url": url}
@@ -674,8 +674,8 @@ def cotacao_vieraagrocereais():
             "Soja": soja,
             "url": url,
             "Fonte": "Vieraagrocereais",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Ijuí"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Ijuí"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Vieraagrocereais: {str(e)}", "url": url}
@@ -713,8 +713,8 @@ def cotacao_agropan():
             },
             "Fonte": "Agropan",
             "url": url,
-            "estado": "Rio Grande do Sul",
-            "cidade": "Ijuí"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Ijuí"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Agropan: {str(e)}", "url": url}
@@ -730,8 +730,8 @@ def cotacao_agriplanmga():
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
     try:
-        data_hoje = date.today()
-        data_ptBR = data_hoje.strftime("%d/%m/%Y")
+        data = soup.find('span', class_='pull-left cotacaovalordata')
+        data_str = data.get_text(strip=True) if data else "N/A"
         price = soup.find_all('span', class_='pull-left cotacaovalorsaca')
         if len(price) >= 3:
             milho = price[0].get_text(strip=True) if price[0] else "N/A"
@@ -739,13 +739,13 @@ def cotacao_agriplanmga():
         else:
             soja = milho = "Mercado está fechado"
         return {
-            "Data": data_ptBR,
+            "Data": data_str,
             "Milho": milho,
             "Soja": soja,
             "url": url,
             "Fonte": "Agriplanmga",
-            "estado": "Rio Grande do Sul",
-            "cidade": "Maringá"
+            "Estado": "Rio Grande do Sul",
+            "Cidade": "Maringá"
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Agriplanmga: {str(e)}", "url": url}
