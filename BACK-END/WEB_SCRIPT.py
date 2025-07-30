@@ -81,26 +81,44 @@ def cotacao_camposverdes():
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         return {"ERRO": f"Não foi possível acessar os dados da Campos Verdes: {str(e)}", "url": url}
+    
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
     try:
-        data_hoje = date.today()
-        data_ptBR = data_hoje.strftime("%d/%m/%Y")
-        price = soup.find_all('div', class_='col-xs-3 col-sm-6 col-md-5 col-lg-4')
-        if len(price) >= 3:
-            soja = price[0].get_text(strip=True) if price[0] else "N/A"
-            milho = price[1].get_text(strip=True) if price[1] else "N/A"
+        
+        data_element = soup.find('span', class_='pull-right font-ctc-dia')
+        
+        if data_element:
+            
+            data_text = data_element.get_text(strip=True)
+            data = data_text.replace('- Manhã', '').strip()
+        else:
+            data = "N/A"
+        price_elements = soup.find_all('div', class_='col-xs-3 col-sm-6 col-md-5 col-lg-4')
+        
+        soja = "N/A"
+        milho = "N/A"
+
+        if len(price_elements) >= 2:
+            
+            soja_text = price_elements[0].get_text(strip=True)
+            milho_text = price_elements[1].get_text(strip=True)
+            soja_match = re.search(r'R\$\s*[\d,.]+', soja_text)
+            milho_match = re.search(r'R\$\s*[\d,.]+', milho_text)
+
+            soja = soja_match.group(0) if soja_match else "N/A"
+            milho = milho_match.group(0) if milho_match else "N/A"
         else:
             soja = milho = "Mercado está fechado"
+
         return {
-            "Data": data_ptBR,
+            "Data": data,
             "Soja": soja,
             "Milho": milho,
             "url": url,
             "Fonte": "Campos Verdes",
-            "Estado": "Rio Grande do Sul",
+            "Estado": "Paraná",
             "Cidade": "Maringá"
-
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Campos Verdes: {str(e)}", "url": url}
