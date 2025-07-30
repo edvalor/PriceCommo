@@ -26,6 +26,8 @@
             const response = await fetch('http://127.0.0.1:5000/cotacao/todas' );
             const data = await response.json();
 
+            
+
             // 2. Definir a ordem desejada das fontes (as chaves do JSON)
             const ordemFontes = [
                 // --- Rio Grande do Sul ---
@@ -62,6 +64,29 @@
 
             // 3. Preparar o cabeçalho do CSV
             let csvContent = 'Data;Soja;Milho;Fonte;Estado;Cidade\n';
+            const dados = window.dadosCotacoes;
+
+            function formatarPrecoCSV(preco) {
+                if (!preco || preco === "N/A" || preco === "Mercado está fechado" || preco === "---") {
+                    return preco;
+                }
+                // Remove "R$", espaços em branco e substitui o ponto por vírgula
+                return preco.replace(/R\$\s*/, '').trim().replace('.', ',');
+            }
+
+            // Função auxiliar para adicionar linha ao CSV
+            function adicionarLinha(fonte, estado, cidade, data, regiao, soja, milho) {
+                const linha = [
+                    fonte,
+                    estado,
+                    cidade,
+                    data,
+                    regiao,
+                    formatarPrecoCSV(soja),
+                    formatarPrecoCSV(milho)
+                ].join(';'); // Usando ponto e vírgula como delimitador
+                csvContent += linha + "\n";
+            }
 
             // 4. Iterar sobre o array de ordem definida para construir o CSV
             ordemFontes.forEach(key => {
@@ -168,6 +193,7 @@
                         if (empresa.toLowerCase() === "cotrisal") {
                             conteudo += `<p><strong>Atenção:</strong> O faturamento de grãos pela parte da tarde será das 13:30 às 16:00h.</p>`;
                         }
+
 
                         // Cotações
                         if (info["Balcão"]) {
