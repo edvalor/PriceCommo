@@ -261,8 +261,8 @@ def cotacao_cotacoesmercado():
         if len(price) >= 10:
             soja_balcao = extrair_price(price[1].get_text(strip=True)) if price[1] else "N/A"
             milho_balcao = extrair_price(price[2].get_text(strip=True)) if price[2] else "N/A"
-            soja_disponivel = extrair_price(price[6].get_text(strip=True)) if price[6] else "N/A"
-            milho_disponivel = extrair_price(price[7].get_text(strip=True)) if price[7] else "N/A"
+            soja_disponivel = extrair_price(price[7].get_text(strip=True)) if price[7] else "N/A"
+            milho_disponivel = extrair_price(price[8].get_text(strip=True)) if price[8] else "N/A"
         else:
             soja_balcao = milho_balcao = soja_disponivel = milho_disponivel = "Mercado está fechado"
         return {
