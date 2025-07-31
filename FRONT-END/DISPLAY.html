@@ -20,7 +20,7 @@
     <h1 class="titulo">Cotações Agrícolas</h1>
 
    <script>
-    async function downloadCSV() {
+     async function downloadCSV() {
         try {
             // 1. Buscar os dados da API
             const response = await fetch('http://127.0.0.1:5000/cotacao/todas' );
@@ -156,100 +156,96 @@
 
 
     <script>
-        function carregarCidades(idContainer, url ) {
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.getElementById(idContainer);
-                    for (const empresa in data) {
-                        const info = data[empresa];
-                        const div = document.createElement("div");
-                        div.className = "empresa";
+        function carregarCidades(idContainer, url) {
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById(idContainer);
+            container.innerHTML = ''; // Limpa o container para evitar duplicatas
 
-                        if (info.url) {
-                            div.dataset.url = info.url;
-                            div.style.cursor = "pointer";
-                            div.addEventListener("click", function () {
-                                window.open(this.dataset.url, "_blank");
-                            });
+            for (const empresa in data) {
+                const info = data[empresa];
+                const div = document.createElement("div");
+                div.className = "empresa";
+
+                if (info.url) {
+                    div.dataset.url = info.url;
+                    div.style.cursor = "pointer";
+                    div.addEventListener("click", function () {
+                        window.open(this.dataset.url, "_blank");
+                    });
+                }
+
+                let conteudo = `<h2>${empresa.toUpperCase()}</h2>`;
+                conteudo += `<p>Data: ${info.Data || '---'}</p>`;
+                conteudo += `<p>${info.Cidade || 'Cidade desconhecida'} - ${info.Estado || 'Estado desconhecido'}</p>`;
+
+                // Avisos especiais
+                if (empresa.toLowerCase() === "cotrijal") {
+                    conteudo += `<p><strong>Atenção:</strong> O faturamento de grãos pela parte da tarde será das 13:30 às 16:00h.</p>`;
+                }
+                if (empresa.toLowerCase() === "cotrirosa") {
+                    conteudo += `<p><strong>Atenção:</strong> O site oficial apresenta o valor real das commodities, por aqui é um valor aproximado.</p>`;
+                }
+                if (empresa.toLowerCase() === "cotrisal") {
+                    conteudo += `<p><strong>Atenção:</strong> O faturamento de grãos pela parte da tarde será das 13:30 às 16:00h.</p>`;
+                }
+
+                // --- Cotações (Lógica corrigida e simplificada) ---
+
+                // Função auxiliar para formatar e exibir o preço
+                const formatarPrecoHTML = (produto, valor) => {
+                    if (!valor) return ''; // Se não houver valor, não exibe nada
+
+                    // Se o valor for um objeto (com minima/maxima), como em 'cotacoesmercado'
+                    if (typeof valor === 'object' && valor.minima) {
+                        if (valor.minima === valor.maxima) {
+                            return `<span>${produto}: R$ ${valor.minima}</span>`;
+                        } else {
+                            return `<span>${produto}: R$ ${valor.minima} a R$ ${valor.maxima}</span>`;
                         }
-
-                        let conteudo = `<h2>${empresa.toUpperCase()}</h2>`;
-                        conteudo += `<p>Data: ${info.Data || '---'}</p>`;
-                        conteudo += `<p>${info.Cidade || 'Cidade desconhecida'} - ${info.Estado || 'Estado desconhecido'}</p>`;
-
-                        // Avisos especiais
-
-                        if (empresa.toLowerCase() === "cotrijal") {
-                            conteudo += `<p><strong>Atenção:</strong> O faturamento de grãos pela parte da tarde será das 13:30 às 16:00h.</p>`;
-                        }
-                        if (empresa.toLowerCase() === "cotrirosa") {
-                            conteudo += `<p><strong>Atenção:</strong> O site oficial apresenta o valor real das commodities, por aqui é um valor aproximado.</p>`;
-                        }
-                        if (empresa.toLowerCase() === "cotrisal") {
-                            conteudo += `<p><strong>Atenção:</strong> O faturamento de grãos pela parte da tarde será das 13:30 às 16:00h.</p>`;
-                        }
-
-
-                        // Cotações
-                        if (info["Balcão"]) {
-                            conteudo += `<h4>Balcão</h4><div class="valores">
-                                ${info["Balcão"].Milho ? `<span>Milho: ${info["Balcão"].Milho}</span>` : ''}
-                                ${info["Balcão"].Soja ? `<span>Soja: ${info["Balcão"].Soja}</span>` : ''}
-                            </div>`;
-                        }
-
-                        if (info["Disponível"]) {
-                            conteudo += `<h4>Disponível</h4><div class="valores">
-                                ${info["Disponível"].Milho ? `<span>Milho: ${info["Disponível"].Milho}</span>` : ''}
-                                ${info["Disponível"].Soja ? `<span>Soja: ${info["Disponível"].Soja}</span>` : ''}
-                            </div>`;
-                        }
-
-                        if (info["Manhã"]) {
-                            conteudo += `<h4>Manhã</h4><div class="valores">
-                                ${info["Manhã"].Milho ? `<span>Milho: ${info["Manhã"].Milho}</span>` : ''}
-                                ${info["Manhã"].Soja ? `<span>Soja: ${info["Manhã"].Soja}</span>` : ''}
-                            </div>`;
-                        }
-
-                        if (info["Tarde"]) {
-                            conteudo += `<h4>Tarde</h4><div class="valores">
-                                ${info["Tarde"].Milho ? `<span>Milho: ${info["Tarde"].Milho}</span>` : ''}
-                                ${info["Tarde"].Soja ? `<span>Soja: ${info["Tarde"].Soja}</span>` : ''}
-                            </div>`;
-                        }
-
-                        if (info["Regiao Norte"]) {
-                            conteudo += `<h4>Região Norte</h4><div class="valores">
-                                ${info["Regiao Norte"].Milho ? `<span>Milho: ${info["Regiao Norte"].Milho}</span>` : ''}
-                                ${info["Regiao Norte"].Soja ? `<span>Soja: ${info["Regiao Norte"].Soja}</span>` : ''}
-                            </div>`;
-                        }
-
-                        if (info["Regiao Noroeste"]) {
-                            conteudo += `<h4>Região Noroeste</h4><div class="valores">
-                                ${info["Regiao Noroeste"].Milho ? `<span>Milho: ${info["Regiao Noroeste"].Milho}</span>` : ''}
-                                ${info["Regiao Noroeste"].Soja ? `<span>Soja: ${info["Regiao Noroeste"].Soja}</span>` : ''}
-                            </div>`;
-                        }
-
-                        if (info.Soja || info.Milho) {
-                            conteudo += `<div class="valores">
-                                ${info.Soja ? `<span>Soja: ${info.Soja}</span>` : ''}
-                                ${info.Milho ? `<span>Milho: ${info.Milho}</span>` : ''}
-                            </div>`;
-                        }
-
-                        div.innerHTML = conteudo;
-                        container.appendChild(div);
                     }
-                })
-                .catch(error => {
-                    document.getElementById(idContainer).innerHTML = "Erro ao carregar dados.";
-                    console.error("Erro:", error);
-                });
-        }
+                    // Se for uma string simples (para as outras fontes)
+                    return `<span>${produto}: ${valor}</span>`;
+                };
+
+                // Função para criar o bloco HTML de um grupo de cotações
+                const criarBlocoCotacao = (titulo, grupo) => {
+                    if (!grupo) return '';
+                    let blocoHTML = `<h4>${titulo}</h4><div class="valores">`;
+                    blocoHTML += formatarPrecoHTML('Soja', grupo.Soja);
+                    blocoHTML += formatarPrecoHTML('Milho', grupo.Milho);
+                    blocoHTML += `</div>`;
+                    return blocoHTML;
+                };
+
+                // Adiciona os blocos de cotação ao conteúdo
+                conteudo += criarBlocoCotacao('Balcão', info['Balcão']);
+                conteudo += criarBlocoCotacao('Disponível', info['Disponível']);
+                conteudo += criarBlocoCotacao('Manhã', info['Manhã']);
+                conteudo += criarBlocoCotacao('Tarde', info['Tarde']);
+                conteudo += criarBlocoCotacao('Região Norte', info['Regiao Norte']);
+                conteudo += criarBlocoCotacao('Região Noroeste', info['Regiao Noroeste']);
+
+                // Tratamento para fontes com estrutura simples (sem grupos)
+                if (!info['Balcão'] && !info['Manhã'] && !info['Regiao Norte']) {
+                    if (info.Soja || info.Milho) {
+                        conteudo += `<div class="valores">`;
+                        conteudo += formatarPrecoHTML('Soja', info.Soja);
+                        conteudo += formatarPrecoHTML('Milho', info.Milho);
+                        conteudo += `</div>`;
+                    }
+                }
+
+                div.innerHTML = conteudo;
+                container.appendChild(div);
+            }
+        })
+        .catch(error => {
+            document.getElementById(idContainer).innerHTML = "Erro ao carregar dados.";
+            console.error("Erro:", error);
+        });
+}
 
         // Chamadas por cidade
         carregarCidades("cotacoes_passo_fundo", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/passo_fundo" );
@@ -262,3 +258,6 @@
 </body>
 
 </html>
+
+
+<!--ESSA PA-->
