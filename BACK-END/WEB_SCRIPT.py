@@ -43,28 +43,19 @@ def extrair_valores_min_max(texto_preco):
 
 
 def calcular_media_preco(texto_preco):
-    """
-    Extrai valores de uma string de preço, calcula a média e retorna formatada.
-    Ex: "R$ 131,00 a R$ 133,00" -> "132,00"
-    Ex: "R$ 60,00" -> "60,00"
-    """
+
     if not isinstance(texto_preco, str):
         return "N/A"
 
-    # Encontra todos os números (formato 123,00 ou 123.00)
-    # Substitui vírgula por ponto para conversão para float
     numeros_str = [num.replace(',', '.') for num in re.findall(r'[\d]+[.,][\d]{2}', texto_preco)]
     
     if not numeros_str:
         return "N/A"
 
-    # Converte as strings para números (float)
     numeros_float = [float(n) for n in numeros_str]
-    
-    # Calcula a média
+
     media = sum(numeros_float) / len(numeros_float)
-    
-    # Formata de volta para o padrão brasileiro (string com vírgula)
+
     return f"{media:.2f}".replace('.', ',')
 
 
@@ -298,32 +289,31 @@ def cotacao_cotacoesmercado():
         price_elements = soup.find_all('p', class_='font_8 wixui-rich-text__text')
         
         if len(price_elements) >= 10:
-            # Extrai o texto completo de cada linha de preço
+            # Extrai o texto completo de cada linha
             texto_soja_balcao = price_elements[1].get_text(strip=True)
             texto_milho_balcao = price_elements[2].get_text(strip=True)
             texto_soja_disponivel = price_elements[6].get_text(strip=True)
             texto_milho_disponivel = price_elements[7].get_text(strip=True)
 
-            # Usa a nova função para obter os dicionários de min/max
-            soja_balcao = extrair_valores_min_max(texto_soja_balcao)
-            milho_balcao = extrair_valores_min_max(texto_milho_balcao)
-            soja_disponivel = extrair_valores_min_max(texto_soja_disponivel)
-            milho_disponivel = extrair_valores_min_max(texto_milho_disponivel)
+            # Usa a nova função para calcular a média de cada um
+            media_soja_balcao = calcular_media_preco(texto_soja_balcao)
+            media_milho_balcao = calcular_media_preco(texto_milho_balcao)
+            media_soja_disponivel = calcular_media_preco(texto_soja_disponivel)
+            media_milho_disponivel = calcular_media_preco(texto_milho_disponivel)
         else:
-            # Define um valor padrão caso não encontre os preços
-            default_value = {"minima": "N/A", "maxima": "N/A"}
-            soja_balcao = milho_balcao = soja_disponivel = milho_disponivel = default_value
+            media_soja_balcao = media_milho_balcao = "N/A"
+            media_soja_disponivel = media_milho_disponivel = "N/A"
             
-        # Monta o JSON final com a estrutura desejada
+        # Retorna o JSON com a estrutura de média, que é mais simples
         return {
             "Data": data_ptBR,
             "Balcão": {
-                "Soja": soja_balcao,
-                "Milho": milho_balcao
+                "Soja": media_soja_balcao,
+                "Milho": media_milho_balcao
             },
             "Disponível": {
-                "Soja": soja_disponivel,
-                "Milho": milho_disponivel
+                "Soja": media_soja_disponivel,
+                "Milho": media_milho_disponivel
             },
             "url": url,
             "Fonte": "Cotacoesemercado",
@@ -332,6 +322,7 @@ def cotacao_cotacoesmercado():
         }
     except Exception as e:
         return {"ERRO": f"Erro ao processar dados da Cotações & Mercado: {str(e)}", "url": url}
+
 
 
 def cotacao_cotriba():
