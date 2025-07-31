@@ -30,6 +30,42 @@ def limpar_texto(texto):
     return texto.strip()
 
 
+def extrair_valores_min_max(texto_preco):
+    numeros = re.findall(r'[\d]+[.,][\d]{2}', texto_preco)
+
+    if len(numeros) == 2:
+        return {"minima": numeros[0], "maxima": numeros[1]}
+    elif len(numeros) == 1:
+        return {"minima": numeros[0], "maxima": numeros[0]}
+    else:
+        return {"minima": "N/A", "maxima": "N/A"}
+    
+
+
+def calcular_media_preco(texto_preco):
+    """
+    Extrai valores de uma string de preço, calcula a média e retorna formatada.
+    Ex: "R$ 131,00 a R$ 133,00" -> "132,00"
+    Ex: "R$ 60,00" -> "60,00"
+    """
+    if not isinstance(texto_preco, str):
+        return "N/A"
+
+    # Encontra todos os números (formato 123,00 ou 123.00)
+    # Substitui vírgula por ponto para conversão para float
+    numeros_str = [num.replace(',', '.') for num in re.findall(r'[\d]+[.,][\d]{2}', texto_preco)]
+    
+    if not numeros_str:
+        return "N/A"
+
+    # Converte as strings para números (float)
+    numeros_float = [float(n) for n in numeros_str]
+    
+    # Calcula a média
+    media = sum(numeros_float) / len(numeros_float)
+    
+    # Formata de volta para o padrão brasileiro (string com vírgula)
+    return f"{media:.2f}".replace('.', ',')
 
 
 
@@ -248,23 +284,37 @@ def cotacao_coopeagri():
 def cotacao_cotacoesmercado():
     url = 'https://www.cotacoesemercado.com/'
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=10 )
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         return {"ERRO": f"Não foi possível acessar os dados da Cotações & Mercado: {str(e)}", "url": url}
+    
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
     try:
         data_hoje = date.today()
         data_ptBR = data_hoje.strftime("%d/%m/%Y")
-        price = soup.find_all('p', class_='font_8 wixui-rich-text__text')
-        if len(price) >= 10:
-            soja_balcao = extrair_price(price[1].get_text(strip=True)) if price[1] else "N/A"
-            milho_balcao = extrair_price(price[2].get_text(strip=True)) if price[2] else "N/A"
-            soja_disponivel = extrair_price(price[7].get_text(strip=True)) if price[7] else "N/A"
-            milho_disponivel = extrair_price(price[8].get_text(strip=True)) if price[8] else "N/A"
+        
+        price_elements = soup.find_all('p', class_='font_8 wixui-rich-text__text')
+        
+        if len(price_elements) >= 10:
+            # Extrai o texto completo de cada linha de preço
+            texto_soja_balcao = price_elements[1].get_text(strip=True)
+            texto_milho_balcao = price_elements[2].get_text(strip=True)
+            texto_soja_disponivel = price_elements[6].get_text(strip=True)
+            texto_milho_disponivel = price_elements[7].get_text(strip=True)
+
+            # Usa a nova função para obter os dicionários de min/max
+            soja_balcao = extrair_valores_min_max(texto_soja_balcao)
+            milho_balcao = extrair_valores_min_max(texto_milho_balcao)
+            soja_disponivel = extrair_valores_min_max(texto_soja_disponivel)
+            milho_disponivel = extrair_valores_min_max(texto_milho_disponivel)
         else:
-            soja_balcao = milho_balcao = soja_disponivel = milho_disponivel = "Mercado está fechado"
+            # Define um valor padrão caso não encontre os preços
+            default_value = {"minima": "N/A", "maxima": "N/A"}
+            soja_balcao = milho_balcao = soja_disponivel = milho_disponivel = default_value
+            
+        # Monta o JSON final com a estrutura desejada
         return {
             "Data": data_ptBR,
             "Balcão": {
@@ -281,7 +331,7 @@ def cotacao_cotacoesmercado():
             "Cidade": "Passo Fundo"
         }
     except Exception as e:
-        return {"ERRO": f"Não foi possível acessar os dados da Cotações & Mercado: {str(e)}", "url": url}
+        return {"ERRO": f"Erro ao processar dados da Cotações & Mercado: {str(e)}", "url": url}
 
 
 def cotacao_cotriba():
