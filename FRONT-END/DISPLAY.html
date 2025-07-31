@@ -19,118 +19,99 @@
     </header>
     <h1 class="titulo">Cotações Agrícolas</h1>
 
-   <script>
-     async function downloadCSV() {
-        try {
-            // 1. Buscar os dados da API
-            const response = await fetch('http://127.0.0.1:5000/cotacao/todas' );
-            const data = await response.json();
+    <script>
+        async function downloadCSV() {
+    try {
+        // 1. Buscar os dados da API
+        const response = await fetch('http://127.0.0.1:5000/cotacao/todas' );
+        const data = await response.json();
 
-            
+        // 2. Definir a ordem das fontes
+        const ordemFontes = [
+            'cepalcereais', 'coagril', 'cotacoesmercado', 'cotrisal', 'cotrisoja', 'grupopoletto', 'sebben',
+            'capaznet', 'cotriba', 'cotriel', 'cotrijal', 'coopeagri',
+            'cooperoque', 'lazarotto', 'grupouggeri', 'vieraagrocereais', 'agropan',
+            'agricolagemelli', 'plantarnet',
+            'agriplanmga', 'camposverdes'
+        ];
 
-            // 2. Definir a ordem desejada das fontes (as chaves do JSON)
-            const ordemFontes = [
-                // --- Rio Grande do Sul ---
-                // Passo Fundo
-                'cepalcereais',
-                'coagril',
-                'cotacoesmercado',
-                'cotrisal',
-                'cotrisoja',
-                'grupopoletto',
-                'sebben',
-                // Não-me-Toque
-                'capaznet',
-                'cotriba',
-                'cotriel',
-                'cotrijal',
-                'coopeagri',
-                // Ijuí
-                'cooperoque',
-                'lazarotto',
-                'grupouggeri',
-                'vieraagrocereais',
-                'agropan',
-                // --- Paraná ---
-                // Cascavel
-                'agricolagemelli',
-                'plantarnet',
-                // Maringá
-                'agriplanmga',
-                'camposverdes'
-            ];
+        // 3. Preparar o cabeçalho do CSV no formato antigo
+        let csvContent = 'Data;Soja;Milho;Fonte;Estado;Cidade\n';
 
-            // 3. Preparar o cabeçalho do CSV
-            let csvContent = 'Data;Soja;Milho;Fonte;Estado;Cidade\n';
-            const dados = window.dadosCotacoes;
+        // **** AQUI ESTÁ A FUNÇÃO DE FORMATAÇÃO ****
+        // Ela será aplicada a TODOS os preços antes de irem para o CSV.
+        const formatarPrecoParaCSV = (preco) => {
+            // Se o valor não for uma string ou for N/A, retorna como está.
+            if (typeof preco !== 'string' || !preco || preco === 'N/A') {
+                return 'N/A';
+            }
+            // 1. Remove o "R$" e espaços.
+            // 2. Substitui o ponto "." pela vírgula ",".
+            return preco.replace(/R\$\s*/, '').trim().replace('.', ',');
+        };
 
-            function formatarPrecoCSV(preco) {
-                if (!preco || preco === "N/A" || preco === "Mercado está fechado" || preco === "---") {
-                    return preco;
-                }
-                // Remove "R$", espaços em branco e substitui o ponto por vírgula
-                return preco.replace(/R\$\s*/, '').trim().replace('.', ',');
+        // 4. Iterar sobre as fontes na ordem definida
+        ordemFontes.forEach(key => {
+            const item = data[key];
+            if (!item || item.ERRO) return;
+
+            const { Fonte, Cidade, Estado, Data } = item;
+
+            // Função auxiliar para adicionar uma linha formatada
+            const adicionarLinha = (soja, milho, grupo = '') => {
+                if ((!soja || soja === 'N/A') && (!milho || milho === 'N/A')) return;
+
+                const fonteFinal = grupo ? `${Fonte} (${grupo})` : Fonte;
+                
+                // **** APLICA A FORMATAÇÃO AQUI ****
+                const sojaFormatado = formatarPrecoParaCSV(soja);
+                const milhoFormatado = formatarPrecoParaCSV(milho);
+                
+                csvContent += `${Data || 'N/A'};${sojaFormatado};${milhoFormatado};${fonteFinal};${Estado || 'N/A'};${Cidade || 'N/A'}\n`;
+            };
+
+            // 5. Lógica para processar os diferentes tipos de cotação
+            if (item['Balcão']) {
+                adicionarLinha(item['Balcão'].Soja, item['Balcão'].Milho, 'Balcão');
+            }
+            if (item['Disponível']) {
+                adicionarLinha(item['Disponível'].Soja, item['Disponível'].Milho, 'Disponível');
+            }
+            if (item['Tarde']) {
+                adicionarLinha(item['Tarde'].Soja, item['Tarde'].Milho, 'Tarde');
+            }
+            if (item['Regiao Noroeste']) {
+                adicionarLinha(item['Regiao Noroeste'].Soja, item['Regiao Noroeste'].Milho, 'Região Noroeste');
             }
 
-            // Função auxiliar para adicionar linha ao CSV
-            function adicionarLinha(fonte, estado, cidade, data, regiao, soja, milho) {
-                const linha = [
-                    fonte,
-                    estado,
-                    cidade,
-                    data,
-                    regiao,
-                    formatarPrecoCSV(soja),
-                    formatarPrecoCSV(milho)
-                ].join(';'); // Usando ponto e vírgula como delimitador
-                csvContent += linha + "\n";
+            // Para fontes com estrutura simples (sem grupos)
+            if (!item['Balcão'] && !item['Manhã'] && !item['Regiao Norte']) {
+                adicionarLinha(item.Soja, item.Milho);
             }
+        });
 
-            // 4. Iterar sobre o array de ordem definida para construir o CSV
-            ordemFontes.forEach(key => {
-                // Pega o dado correspondente à chave atual
-                const item = data[key];
+        // 6. Criar e baixar o arquivo CSV
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.setAttribute('href', URL.createObjectURL(blob));
+        link.setAttribute('download', 'FECHAMENTO.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-                // Pula se a chave não existir nos dados ou se for um erro
-                if (!item || 'ERRO' in item) {
-                    console.warn(`Fonte "${key}" não encontrada ou com erro. Pulando.`);
-                    return; // 'continue' para o forEach
-                }
-
-                const estado = item.Estado || 'N/A';
-                const cidade = item.Cidade || 'N/A';
-
-                // Lógica para tratar os diferentes formatos de dados
-                if ('Regiao Norte' in item && 'Regiao Noroeste' in item) {
-                    csvContent += `${item.Data || 'N/A'};${item['Regiao Noroeste'].Soja || 'N/A'};${item['Regiao Noroeste'].Milho || 'N/A'};${item.Fonte || key} (Região Noroeste);${estado};${cidade}\n`;
-                } else if ('Manhã' in item && 'Tarde' in item) {
-                    csvContent += `${item.Data || 'N/A'};${item['Tarde'].Soja || 'N/A'};${item['Tarde'].Milho || 'N/A'};${item.Fonte || key} (Tarde);${estado};${cidade}\n`;
-                } else if ('Balcão' in item && 'Disponível' in item) {
-                    csvContent += `${item.Data || 'N/A'};${item['Balcão'].Soja || 'N/A'};${item['Balcão'].Milho || 'N/A'};${item.Fonte || key} (Balcão);${estado};${cidade}\n`;
-                    csvContent += `${item.Data || 'N/A'};${item['Disponível'].Soja || 'N/A'};${item['Disponível'].Milho || 'N/A'};${item.Fonte || key} (Disponível);${estado};${cidade}\n`;
-                } else {
-                    csvContent += `${item.Data || 'N/A'};${item.Soja || 'N/A'};${item.Milho || 'N/A'};${item.Fonte || key};${estado};${cidade}\n`;
-                }
-            });
-
-            // 5. Criar e baixar o arquivo CSV
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'FECHAMENTO.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-
-        } catch (error) {
-            console.error('Erro ao baixar CSV:', error);
-            alert('Não foi possível baixar o arquivo CSV. Verifique se a API está funcionando.');
-        }
+    } catch (error) {
+        console.error('Erro ao baixar CSV:', error);
+        alert('Não foi possível baixar o arquivo CSV.');
     }
-</script>
-    <button class="download-btn" onclick="downloadCSV()"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></svg>Baixar preços em CSV</button>
+}
+    </script>
+    <button class="download-btn" onclick="downloadCSV()"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
+            fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+            <path
+                d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+            <path
+                d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+        </svg>Baixar preços em CSV</button>
 
     <h1 class="subtitulo">Rio Grande do Sul</h1>
 
@@ -157,103 +138,71 @@
 
     <script>
         function carregarCidades(idContainer, url) {
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById(idContainer);
-            container.innerHTML = ''; // Limpa o container para evitar duplicatas
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById(idContainer);
+                    container.innerHTML = ''; // Limpa o container
 
-            for (const empresa in data) {
-                const info = data[empresa];
-                const div = document.createElement("div");
-                div.className = "empresa";
+                    for (const empresa in data) {
+                        const info = data[empresa];
+                        const div = document.createElement("div");
+                        div.className = "empresa";
 
-                if (info.url) {
-                    div.dataset.url = info.url;
-                    div.style.cursor = "pointer";
-                    div.addEventListener("click", function () {
-                        window.open(this.dataset.url, "_blank");
-                    });
-                }
-
-                let conteudo = `<h2>${empresa.toUpperCase()}</h2>`;
-                conteudo += `<p>Data: ${info.Data || '---'}</p>`;
-                conteudo += `<p>${info.Cidade || 'Cidade desconhecida'} - ${info.Estado || 'Estado desconhecido'}</p>`;
-
-                // Avisos especiais
-                if (empresa.toLowerCase() === "cotrijal") {
-                    conteudo += `<p><strong>Atenção:</strong> O faturamento de grãos pela parte da tarde será das 13:30 às 16:00h.</p>`;
-                }
-                if (empresa.toLowerCase() === "cotrirosa") {
-                    conteudo += `<p><strong>Atenção:</strong> O site oficial apresenta o valor real das commodities, por aqui é um valor aproximado.</p>`;
-                }
-                if (empresa.toLowerCase() === "cotrisal") {
-                    conteudo += `<p><strong>Atenção:</strong> O faturamento de grãos pela parte da tarde será das 13:30 às 16:00h.</p>`;
-                }
-
-                // --- Cotações (Lógica corrigida e simplificada) ---
-
-                // Função auxiliar para formatar e exibir o preço
-                const formatarPrecoHTML = (produto, valor) => {
-                    if (!valor) return ''; // Se não houver valor, não exibe nada
-
-                    // Se o valor for um objeto (com minima/maxima), como em 'cotacoesmercado'
-                    if (typeof valor === 'object' && valor.minima) {
-                        if (valor.minima === valor.maxima) {
-                            return `<span>${produto}: R$ ${valor.minima}</span>`;
-                        } else {
-                            return `<span>${produto}: R$ ${valor.minima} a R$ ${valor.maxima}</span>`;
+                        if (info.url) {
+                            div.dataset.url = info.url;
+                            div.style.cursor = "pointer";
+                            div.addEventListener("click", () => window.open(info.url, "_blank"));
                         }
+
+                        let conteudo = `<h2>${empresa.toUpperCase()}</h2>`;
+                        conteudo += `<p>Data: ${info.Data || '---'}</p>`;
+                        conteudo += `<p>${info.Cidade || 'Cidade'} - ${info.Estado || 'Estado'}</p>`;
+
+                        // Função auxiliar para criar o bloco de cotação
+                        const criarBloco = (titulo, grupo) => {
+                            if (!grupo) return '';
+                            let html = `<h4>${titulo}</h4><div class="valores">`;
+                            if (grupo.Soja) html += `<span>Soja: R$ ${grupo.Soja}</span>`;
+                            if (grupo.Milho) html += `<span>Milho: R$ ${grupo.Milho}</span>`;
+                            html += `</div>`;
+                            return html;
+                        };
+
+                        conteudo += criarBloco('Balcão', info['Balcão']);
+                        conteudo += criarBloco('Disponível', info['Disponível']);
+                        conteudo += criarBloco('Manhã', info['Manhã']);
+                        conteudo += criarBloco('Tarde', info['Tarde']);
+                        conteudo += criarBloco('Região Norte', info['Regiao Norte']);
+                        conteudo += criarBloco('Região Noroeste', info['Regiao Noroeste']);
+
+                        // Para cotações simples
+                        if (!info['Balcão'] && !info['Manhã'] && !info['Regiao Norte']) {
+                            if (info.Soja || info.Milho) {
+                                conteudo += `<div class="valores">`;
+                                if (info.Soja) conteudo += `<span>Soja: R$ ${info.Soja}</span>`;
+                                if (info.Milho) conteudo += `<span>Milho: R$ ${info.Milho}</span>`;
+                                conteudo += `</div>`;
+                            }
+                        }
+
+                        div.innerHTML = conteudo;
+                        container.appendChild(div);
                     }
-                    // Se for uma string simples (para as outras fontes)
-                    return `<span>${produto}: ${valor}</span>`;
-                };
-
-                // Função para criar o bloco HTML de um grupo de cotações
-                const criarBlocoCotacao = (titulo, grupo) => {
-                    if (!grupo) return '';
-                    let blocoHTML = `<h4>${titulo}</h4><div class="valores">`;
-                    blocoHTML += formatarPrecoHTML('Soja', grupo.Soja);
-                    blocoHTML += formatarPrecoHTML('Milho', grupo.Milho);
-                    blocoHTML += `</div>`;
-                    return blocoHTML;
-                };
-
-                // Adiciona os blocos de cotação ao conteúdo
-                conteudo += criarBlocoCotacao('Balcão', info['Balcão']);
-                conteudo += criarBlocoCotacao('Disponível', info['Disponível']);
-                conteudo += criarBlocoCotacao('Manhã', info['Manhã']);
-                conteudo += criarBlocoCotacao('Tarde', info['Tarde']);
-                conteudo += criarBlocoCotacao('Região Norte', info['Regiao Norte']);
-                conteudo += criarBlocoCotacao('Região Noroeste', info['Regiao Noroeste']);
-
-                // Tratamento para fontes com estrutura simples (sem grupos)
-                if (!info['Balcão'] && !info['Manhã'] && !info['Regiao Norte']) {
-                    if (info.Soja || info.Milho) {
-                        conteudo += `<div class="valores">`;
-                        conteudo += formatarPrecoHTML('Soja', info.Soja);
-                        conteudo += formatarPrecoHTML('Milho', info.Milho);
-                        conteudo += `</div>`;
-                    }
-                }
-
-                div.innerHTML = conteudo;
-                container.appendChild(div);
-            }
-        })
-        .catch(error => {
-            document.getElementById(idContainer).innerHTML = "Erro ao carregar dados.";
-            console.error("Erro:", error);
-        });
-}
+                })
+                .catch(error => {
+                    document.getElementById(idContainer).innerHTML = "Erro ao carregar dados.";
+                    console.error("Erro:", error);
+                });
+        }
 
         // Chamadas por cidade
-        carregarCidades("cotacoes_passo_fundo", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/passo_fundo" );
-        carregarCidades("cotacoes_nao_me_toque", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/nao_me_toque" );
-        carregarCidades("cotacoes_santa_rosa", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/santa_rosa" );
-        carregarCidades("cotacoes_ijui", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/ijui" );
-        carregarCidades("cotacoes_cascavel", "http://127.0.0.1:5000/cotacao/parana/cascavel" );
-        carregarCidades("cotacoes_maringa", "http://127.0.0.1:5000/cotacao/parana/maringa" );
+        carregarCidades("cotacoes_passo_fundo", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/passo_fundo");
+        carregarCidades("cotacoes_nao_me_toque", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/nao_me_toque");
+        carregarCidades("cotacoes_santa_rosa", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/santa_rosa");
+        carregarCidades("cotacoes_ijui", "http://127.0.0.1:5000/cotacao/rio_grande_do_sul/ijui");
+        carregarCidades("cotacoes_cascavel", "http://127.0.0.1:5000/cotacao/parana/cascavel");
+        carregarCidades("cotacoes_maringa", "http://127.0.0.1:5000/cotacao/parana/maringa");
     </script>
 </body>
 
