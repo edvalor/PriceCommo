@@ -45,8 +45,6 @@
                 'cotriel',
                 'cotrijal',
                 'coopeagri',
-                // Santa Rosa
-                'cotrirosa',
                 // Ijuí
                 'cooperoque',
                 'lazarotto',
@@ -104,10 +102,8 @@
 
                 // Lógica para tratar os diferentes formatos de dados
                 if ('Regiao Norte' in item && 'Regiao Noroeste' in item) {
-                    csvContent += `${item.Data || 'N/A'};${item['Regiao Norte'].Soja || 'N/A'};${item['Regiao Norte'].Milho || 'N/A'};${item.Fonte || key} (Região Norte);${estado};${cidade}\n`;
                     csvContent += `${item.Data || 'N/A'};${item['Regiao Noroeste'].Soja || 'N/A'};${item['Regiao Noroeste'].Milho || 'N/A'};${item.Fonte || key} (Região Noroeste);${estado};${cidade}\n`;
                 } else if ('Manhã' in item && 'Tarde' in item) {
-                    csvContent += `${item.Data || 'N/A'};${item['Manhã'].Soja || 'N/A'};${item['Manhã'].Milho || 'N/A'};${item.Fonte || key} (Manhã);${estado};${cidade}\n`;
                     csvContent += `${item.Data || 'N/A'};${item['Tarde'].Soja || 'N/A'};${item['Tarde'].Milho || 'N/A'};${item.Fonte || key} (Tarde);${estado};${cidade}\n`;
                 } else if ('Balcão' in item && 'Disponível' in item) {
                     csvContent += `${item.Data || 'N/A'};${item['Balcão'].Soja || 'N/A'};${item['Balcão'].Milho || 'N/A'};${item.Fonte || key} (Balcão);${estado};${cidade}\n`;
